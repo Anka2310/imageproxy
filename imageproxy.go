@@ -112,6 +112,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	contentType := resp.Header.Get("Content-Type")
 	if contentType != "image/jpeg" &&
 	   contentType != "image/png" &&
+	   contentType != "image/bmp" &&
 	   contentType != "image/gif" {
 	   	http.Error(w, "resource is not a valid image", http.StatusForbidden)
 		return
