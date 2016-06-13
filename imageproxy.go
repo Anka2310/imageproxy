@@ -107,6 +107,16 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := p.Client.Get(req.String())
+
+	// Allow only jpg, png, gif, bmp
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "image/jpeg" &&
+	   contentType != "image/png" &&
+	   contentType != "image/gif" {
+	   	http.Error(w, "resource is not a valid image", http.StatusForbidden)
+		return
+	}
+
 	if err != nil {
 		msg := fmt.Sprintf("error fetching remote image: %v", err)
 		glog.Error(msg)
