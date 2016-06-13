@@ -108,16 +108,6 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := p.Client.Get(req.String())
 
-	// Allow only jpg, png, gif, bmp
-	contentType := resp.Header.Get("Content-Type")
-	if contentType != "image/jpeg" &&
-	   contentType != "image/png" &&
-	   contentType != "image/bmp" &&
-	   contentType != "image/gif" {
-	   	http.Error(w, "resource is not a valid image", http.StatusForbidden)
-		return
-	}
-
 	if err != nil {
 		msg := fmt.Sprintf("error fetching remote image: %v", err)
 		glog.Error(msg)
@@ -125,6 +115,19 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+
+	// Allow only jpg, png, gif, bmp
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "text/plain"
+	} else if contentType != "image/jpeg" &&
+	   contentType != "image/png" &&
+	   contentType != "image/bmp" &&
+	   contentType != "image/gif" &&
+	   contentType != "text/plain" {
+	   	http.Error(w, "resource is not a valid image", http.StatusForbidden)
+		return
+	}
 
 	cached := resp.Header.Get(httpcache.XFromCache)
 	glog.Infof("request: %v (served from cache: %v)", *req, cached == "1")
@@ -139,7 +142,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	copyHeader(w, resp, "Content-Length")
-	copyHeader(w, resp, "Content-Type")
+	w.Header()["Content-Type"] = []string { contentType }
 	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
 }
